@@ -9,11 +9,26 @@
 #include"MyHeap.h"
 #include <map>      //std::map
 #include <unordered_map>  //std::unordered_map
+#include <queue>      //std::queue
+
+#include <cstdlib>
+#include <ctime>
+#include <chrono>
+
+#define pii pair<int,int>
+#define F first
+#define S second
 using namespace std;
 
 // 顯式實例化模板以便在 DLL 中包含特定類型
 template class DLL_API MyHeap<int>;
 template class DLL_API MyHeap<std::string>;
+
+template<typename T>
+using MyMaxHeap = MyHeap<T>;  // 預設用 vector<T>, less<T> (這個不能拿來用minHeap)
+
+template<typename T, typename Container, typename Compare>
+using MyMinHeap = MyHeap<T, Container, Compare>;   //✅ 合法，但還是泛型(可以用這個簡化名稱)
 
 enum LeetcodeExam {
     Leetcodexxx,
@@ -21,9 +36,163 @@ enum LeetcodeExam {
     None,
 };
 
+template <typename T, typename Compare = less<T>>
+static void HeapSort_heapify(vector<T>& vec, int size, int idx, Compare cmp = Compare()) {
+    int larget = idx;
+    int left = 2 * idx + 1;
+    int right = 2 * idx + 2;
+
+    if (left < size && cmp(vec[larget], vec[left]))
+        larget = left;
+    if (right < size && cmp(vec[larget], vec[right]))
+        larget = right;
+
+    if (larget == idx)
+        return;
+    else {
+        std::swap(vec[idx], vec[larget]);
+        HeapSort_heapify(vec, size, larget, cmp);
+    }
+}
+
+template <typename T, typename Compare = less<T>>
+static void HeapSort(vector<T>& vec, Compare cmp = Compare()) {
+    int n = vec.size();
+    for (int i = n / 2 - 1; i >= 0; i--)
+        HeapSort_heapify(vec,n,i, cmp);
+
+    for (int i = n - 1; i > 0; i--) {
+        std::swap(vec[i], vec[0]);
+        HeapSort_heapify(vec, i, 0, cmp);
+    }
+        
+}
+
+
+
 #ifndef NOBUILDING_DLL  //#ifdef BUILDING_DLL
 int main()
 {
+    #pragma region MyHeap Structure 
+
+    #pragma region MyHeap Structure Func. Test
+    std::cout << "MyHeap Func. Test：" << endl;
+
+    MyHeap<int> Max_pq;
+    MyHeap<int,vector<int>,greater<int>> Min_pq;
+    std::cout << "Push elements: 10, 30, 20, 5, 15, -10, -20, -1, -30, -5\n";
+    Max_pq.push(10);
+    Max_pq.push(30);
+    Max_pq.push(20);
+    Max_pq.push(5);
+    Max_pq.push(15);
+    Max_pq.push(-10);
+    Max_pq.push(-20);
+    Max_pq.push(-1);
+    Max_pq.push(-30);
+    Max_pq.push(-5);
+
+    std::cout << "Heap size: " << Max_pq.size() << "\n"; // 應為 10
+    std::cout << "MaxmiumHeap Top element (should be 30): " << Max_pq.top() << "\n";
+
+    std::cout << "Popping elements(MaxmiumHeap): ";
+    while (!Max_pq.empty()) {
+        Min_pq.push(Max_pq.top());
+        std::cout << Max_pq.top() << " ";
+        Max_pq.pop();
+    }
+    std::cout << endl << "Popping elements(MinimiumHeap): ";
+    while (!Min_pq.empty()) {
+        std::cout << Min_pq.top() << " ";
+        Min_pq.pop();
+    }
+    std::cout << "\n";
+    std::cout << "Is MaxmiumHeap empty after popping all? " << (Max_pq.empty() ? "Yes" : "No") << "\n";
+    std::cout << "Is MinimiumHeap empty after popping all? " << (Min_pq.empty() ? "Yes" : "No") << "\n";
+
+    /*  Push elements: 10, 30, 20, 5, 15, -10, -20, -1, -30, -5
+        Heap size: 10
+        Top element (should be 30): 30
+        Popping elements: 30 20 15 10 5 -1 -5 -10 -20 -30
+        Is heap empty after popping all? Yes */
+
+    MyHeap<pii> pq1;
+    pq1.push({ 4, 5 });
+    pq1.push({ 5, 3 });
+    pq1.push({ 4, 8 });
+    pq1.push({ 2, 7 });
+    pq1.push({ 3, 2 });
+    std::cout << endl << "Heap Compare of pair : Heap size = " << pq1.size() << "\n"; // 應為 10
+
+    while (!pq1.empty()) {
+        auto now = pq1.top();
+        pq1.pop();
+        cout << now.F << "  " << now.S << endl;
+    }
+    /*  Output:
+        5   3
+        4   8
+        4   5
+        3   2
+        2   7 */
+
+    #pragma endregion 
+
+    #pragma region MyHeap Structure Speed Test
+    std::cout << endl << "MyHeap Speed Test：" << endl;
+
+    const int size = 100000;
+    vector<int> original(size);
+    srand(time(nullptr));
+    for (int i = 0; i < size; ++i)
+        original[i] = rand() % 1000000 + 1;
+
+    int times = 0;
+    while (times++ < 10) {
+        // 遞迴 heapify 測試
+        vector<int> arr1 = original;
+        auto start1 = chrono::high_resolution_clock::now();
+        MyHeap<int>* heap1 = new MyHeap<int>(arr1, less<int>(), 1);
+        auto end1 = chrono::high_resolution_clock::now();
+        chrono::duration<double> duration1 = end1 - start1;
+
+        // 迴圈 heapify_down 測試
+        vector<int> arr2 = original;
+        auto start2 = chrono::high_resolution_clock::now();
+        MyHeap<int>* heap2 = new MyHeap<int>(arr2, less<int>(), 2);
+        auto end2 = chrono::high_resolution_clock::now();
+        chrono::duration<double> duration2 = end2 - start2;
+
+        cout << "遞迴 heapify 秒數:      " << duration1.count() << " 秒\n";
+        cout << "迴圈 heapify_down 秒數: " << duration2.count() << " 秒\n";
+    }
+
+    #pragma endregion
+
+    #pragma endregion
+
+    #pragma region HeapSort
+    std::cout << endl << "HeapSort：" << endl;
+    vector<int> HeapSort_vec = {-1,-5,-10,10,20,30,5,0};
+    std::cout << "Test Case：";
+    for (auto& num : HeapSort_vec)
+        std::cout << num << " ";
+    std::cout << endl;
+
+    std::cout << "Increasing：";
+    HeapSort(HeapSort_vec);
+    for (auto& num : HeapSort_vec)
+        std::cout << num << " ";
+    std::cout << endl;
+
+    std::cout << "decreasing：";
+    HeapSort(HeapSort_vec,greater<int>());
+    for (auto& num : HeapSort_vec)
+        std::cout << num << " ";
+    std::cout << endl;
+    #pragma endregion
+
+
     #pragma region Leetcode program Test
     //try case
     LeetcodeExam ExamEnum = Leetcodexxx;    //ChangeForExam
@@ -179,8 +348,8 @@ int main()
 
 #pragma region Leetcode xxx. Description
 //Leetcode xxx. Description
-template<typename T>
-void MyHeap<T>::Leetcode_Sol_xxx(int& nums, int _solution) {
+template <typename T, typename Container, typename Compare>
+void MyHeap<T, Container, Compare>::Leetcode_Sol_xxx(int& nums, int _solution) {
     switch (_solution)
     {
     case 1:
@@ -192,8 +361,8 @@ void MyHeap<T>::Leetcode_Sol_xxx(int& nums, int _solution) {
     return ;
 }
 
-template<typename T>
-void MyHeap<T>::DataStructure_xxx(int& nums) {
+template <typename T, typename Container, typename Compare>
+void MyHeap<T, Container, Compare>::DataStructure_xxx(int& nums) {
     return;
 }
 #pragma endregion
