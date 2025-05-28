@@ -37,7 +37,7 @@ enum LeetcodeExam {
 };
 
 template <typename T, typename Compare = less<T>>
-static void HeapSort_heapify(vector<T>& vec, int size, int idx, Compare cmp = Compare()) {
+static void HeapSort_heapify(vector<T>& vec, int size, int idx, const Compare& cmp = Compare()) {
     int larget = idx;
     int left = 2 * idx + 1;
     int right = 2 * idx + 2;
