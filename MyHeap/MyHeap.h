@@ -42,7 +42,7 @@ private:
     Compare cmp;
     
     /*若某個節點是 index i：左子節點：2*idx + 1、右子節點：2*i + 2、父節點：(i - 1) / 2*/
-    /*int idx = heap.size() / 2 - 1 代表：整顆數的中間的第一位父節點 -> 0()*/
+    /*int idx = heap.size() / 2 - 1 代表：整顆樹的中間的第一位父節點 -> 0()*/
     void heapify_up(int idx) {
         while (idx > 0) {   //如果idx = 0，代表現在在top()
             int parent = (idx - 1) / 2;
@@ -82,6 +82,21 @@ private:
             heapify_down_Recursion(largest);
         }
     }
+
+    template<typename T>
+    struct MyLess {
+        bool operator()(const T& a, const T& b) const {
+            return a < b;
+        }
+    };
+
+    template<typename T>
+    struct MyGreater {
+        bool operator()(const T& a, const T& b) const {
+            return a > b;
+        }
+    };
+
     
         
 public:

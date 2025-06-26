@@ -10,6 +10,9 @@
 #include <map>      //std::map
 #include <unordered_map>  //std::unordered_map
 #include <queue>      //std::queue
+#include <limits>      //std::limit
+#include <bitset>
+//#include<algorithm> //make_heap、pop_heap、push_heap
 
 #include <cstdlib>
 #include <ctime>
@@ -36,6 +39,7 @@ enum LeetcodeExam {
     None,
 };
 
+#pragma region HeapSort
 template <typename T, typename Compare = less<T>>
 static void HeapSort_heapify(vector<T>& vec, int size, int idx, const Compare& cmp = Compare()) {
     int larget = idx;
@@ -44,7 +48,7 @@ static void HeapSort_heapify(vector<T>& vec, int size, int idx, const Compare& c
 
     if (left < size && cmp(vec[larget], vec[left]))
         larget = left;
-    if (right < size && cmp(vec[larget], vec[right]))
+    if (right < size&& cmp(vec[larget], vec[right]))
         larget = right;
 
     if (larget == idx)
@@ -59,20 +63,99 @@ template <typename T, typename Compare = less<T>>
 static void HeapSort(vector<T>& vec, Compare cmp = Compare()) {
     int n = vec.size();
     for (int i = n / 2 - 1; i >= 0; i--)
-        HeapSort_heapify(vec,n,i, cmp);
+        HeapSort_heapify(vec, n, i, cmp);
 
     for (int i = n - 1; i > 0; i--) {
         std::swap(vec[i], vec[0]);
         HeapSort_heapify(vec, i, 0, cmp);
     }
-        
+
 }
+#pragma endregion
+
+#pragma region Dijkstra
+/*從start(node)到其他node的最短路徑*/
+void Mydijkstra(int start, vector<vector<pair<int, int>>>& graph, vector<int>& dist) {
+    int n = graph.size();
+    constexpr int imax = numeric_limits<int>::max();
+    dist.assign(n, imax);   //[node,dist]
+    dist[start] = 0;
+    using T = pair<int, int>;
+    priority_queue<T, vector<T>, greater<T>> pq;
+    pq.push({ dist[start],start });   //dist node
+
+    while (!pq.empty()) {
+        auto [cur_dist, cur] = pq.top();
+        pq.pop();
+
+        if (cur_dist > dist[cur]) continue;
+
+        for (auto [next, next_dist] : graph[cur]) {
+            if (next_dist + dist[cur] < dist[next]) {
+                dist[next] = next_dist + dist[cur];
+                pq.push({ dist[next],next });
+            }
+        }
+    }
+}
+#pragma endregion
 
 
 
 #ifndef NOBUILDING_DLL  //#ifdef BUILDING_DLL
 int main()
 {
+    vector<vector<int>> flights = {
+    {0, 1, 1},
+    {0, 2, 5},
+    {1, 2, 1},
+    {2, 3, 1}
+    };
+
+    #pragma region Dijkstra
+    /*
+ 以此圖為例：(無向圖)
+             [0]
+             / \
+           1/   \4
+           /     \
+        [1]-- 2 --[2]
+           \     /
+           6\   /3
+             \ /
+             [3]
+*/
+    int graph_size = 4;
+    vector<vector<pair<int, int>>> graph(graph_size);
+
+    // 加邊 (無向圖)
+    graph[0].push_back({ 1, 1 });
+    graph[1].push_back({ 0, 1 });
+
+    graph[0].push_back({ 2, 4 });
+    graph[2].push_back({ 0, 4 });
+
+    graph[1].push_back({ 2, 2 });
+    graph[2].push_back({ 1, 2 });
+
+    graph[1].push_back({ 3, 6 });
+    graph[3].push_back({ 1, 6 });
+
+    graph[2].push_back({ 3, 3 });
+    graph[3].push_back({ 2, 3 });
+
+    vector<int> min_dist;
+    Mydijkstra(0, graph, min_dist);
+    std::cout << "Shortest distance from 0 to other node：" << endl;
+    for (int d = 0; d < min_dist.size(); d++) {
+        if (min_dist[d] == INT_MAX)
+            std::cout << "0 -> " << d << "：" << "it can\"t traveral!" << "\r";
+        else
+            std::cout << "0 -> " << d << "：" << min_dist[d] << "\r\n";
+    }
+
+    #pragma endregion
+
     #pragma region MyHeap Structure 
 
     #pragma region MyHeap Structure Func. Test
@@ -168,6 +251,29 @@ int main()
     }
 
     #pragma endregion
+
+    #pragma region 手動調整 Heap
+    //make_heap => {10, 5, 1, 3, 2}
+    vector<int> v = { 3, 5, 1, 10, 2 };
+    make_heap(v.begin(), v.end());          // 轉換成 max-heap
+
+    //pop_heap => {5, 3, 1, 2, 10}
+    vector<int> v1 = { 10, 5, 1, 3, 2 };    // 假設已是 heap (一定要是heap)
+    pop_heap(v1.begin(), v1.end());         //只負責把top()值(idx = 0)，丟到最後面(v2.back() => 最大值(10)移到最後
+    v1.pop_back();                          // 移除最大值
+
+    //push_heap => {7, 5, 1, 2, 3}
+    vector<int> v2 = { 5, 3, 1, 2 };        // 假設是 heap (一定要是heap)
+    v2.push_back(7);                        // 加入新元素
+    push_heap(v2.begin(), v2.end());        // 只負責把最後一個值(v2.back())，丟到top()位置(idx = 0)
+
+    //MinHeap
+    make_heap(v.begin(), v.end(), greater<int>());
+    pop_heap(v.begin(), v.end(), greater<int>());
+    push_heap(v.begin(), v.end(), greater<int>());
+
+    #pragma endregion
+
 
     #pragma endregion
 
