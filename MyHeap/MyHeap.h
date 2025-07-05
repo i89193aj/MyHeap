@@ -100,7 +100,7 @@ private:
     
         
 public:
-    MyHeap(Container cmp = Container(), Compare container = Compare(), int mthd = 1) :heap(std::move(cmp)), cmp(std::move(container)) {
+    MyHeap(Container container = Container(), Compare cmp = Compare(), int mthd = 1) :heap(std::move(container)), cmp(std::move(cmp)) {
         switch (mthd)
         {
         case 1:
